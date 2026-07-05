@@ -1,0 +1,14 @@
+# Development Dockerfile for chat-frontend
+# This is used by docker-compose for hot-reload during development
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

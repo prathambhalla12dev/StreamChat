@@ -1,0 +1,107 @@
+version: '3.9'
+
+services:
+
+  # ─── Frontend (React + Nginx) ─────────────────────────────
+  chat-frontend:
+    build:
+      context: ../chat-frontend
+      dockerfile: Dockerfile
+    container_name: chat-frontend-app
+    ports:
+      - "3000:8080"
+    depends_on:
+      - chat-engine
+    restart: unless-stopped
+    networks:
+      - chat-net
+
+  # ─── Application ──────────────────────────────────────────
+  chat-engine:
+    build: .
+    container_name: chat-engine-app
+    ports:
+      - "8080:8080"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/chatengine
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: LocalDevSecretThatIsAtLeast256BitsLongForHS256Algorithm
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - chat-net
+
+  # ─── MongoDB ──────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: chat-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chat-net
+
+  # ─── Redis (pub/sub broker between pods) ──────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: chat-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - chat-net
+
+  # ─── Mongo Express (dev UI) ────────────────────────────────
+  mongo-express:
+    image: mongo-express:latest
+    container_name: chat-mongo-ui
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - mongo
+    networks:
+      - chat-net
+
+  # ─── Redis Commander (dev UI) ──────────────────────────────
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: chat-redis-ui
+    ports:
+      - "8082:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - chat-net
+
+volumes:
+  mongo-data:
+  redis-data:
+
+networks:
+  chat-net:
+    driver: bridge
