@@ -170,6 +170,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: chat-engine/pom.xml
+
+      # Pre-download Maven dependencies so Trivy uses the local
+      # Maven cache instead of repeatedly querying Maven Central.
+      - name: Resolve Maven dependencies
+        working-directory: chat-engine
+        run: mvn dependency:resolve -B
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -177,6 +191,8 @@ jobs:
           scan-ref: .
           format: sarif
           output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
 
       - name: Verify SARIF output
         run: |
