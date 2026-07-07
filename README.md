@@ -5,6 +5,29 @@ A production-grade, full-stack chat application showcasing modern DevOps practic
 **Built for scale.** Deployed in seconds. Scales to thousands of concurrent users.
 
 ---
+## 🚀 Live Demo
+
+### [Open Pulse Chat Engine](https://pulse-chat-engine.vercel.app)
+
+The application is publicly deployed and can be used directly in the browser. Create an account, join or create a room, and test real-time messaging.
+
+> The backend may take a short time to respond after extended inactivity.
+
+---
+
+## 📸 Application Preview
+
+### Authentication
+
+![Pulse Registration](docs/pulse-register.jpg)
+
+### Real-Time Messaging & Typing Indicators
+
+![Pulse Real-Time Chat](docs/pulse-typing.jpg)
+
+The deployed application supports authenticated room-based messaging, persistent chat history, online presence, and real-time typing indicators.
+
+---
 
 ## 🎯 Key Features
 
